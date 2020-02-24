@@ -21,33 +21,9 @@ source "${KUBE_ROOT}/hack/lib/util.sh"
 
 
 function detect-project {
-	echo "Skeleton Provider: detect-project not implemented" 1>&2
+	echo "AKS Provider: detect-project not implemented" 1>&2
 }
 
-# Validate a kubernetes cluster
-function validate-cluster {
-	# by default call the generic validate-cluster.sh script, customizable by
-	# any cluster provider if this does not fit.
-	"${KUBE_ROOT}/cluster/validate-cluster.sh"
-}
-
-function create-certs {
-  rm /tmp/kubeconfig
-
-  execute-cmd-on-pre-existing-master-with-retries "sudo cat /etc/kubernetes/admin.conf" > /tmp/kubeconfig
-  CA_CERT_BASE64=$(cat /tmp/kubeconfig | grep certificate-authority | awk '{print $2}' | head -n 1)
-  KUBELET_CERT_BASE64=$(cat /tmp/kubeconfig | grep client-certificate-data | awk '{print $2}' | head -n 1)
-  KUBELET_KEY_BASE64=$(cat /tmp/kubeconfig | grep client-key-data | awk '{print $2}' | head -n 1)
-
-  # Local kubeconfig.kubemark vars
-  KUBECFG_CERT_BASE64="${KUBELET_CERT_BASE64}"
-  KUBECFG_KEY_BASE64="${KUBELET_KEY_BASE64}"
-
-  # The pre-existing Kubernetes master already has these setup
-  # Set these vars but don't use them
-  CA_KEY_BASE64=$(dd if=/dev/urandom bs=128 count=1 2>/dev/null | base64 | tr -d "=+/" | dd bs=32 count=1 2>/dev/null)
-  MASTER_CERT_BASE64=$(dd if=/dev/urandom bs=128 count=1 2>/dev/null | base64 | tr -d "=+/" | dd bs=32 count=1 2>/dev/null)
-  MASTER_KEY_BASE64=$(dd if=/dev/urandom bs=128 count=1 2>/dev/null | base64 | tr -d "=+/" | dd bs=32 count=1 2>/dev/null)
-  KUBEAPISERVER_CERT_BASE64=$(dd if=/dev/urandom bs=128 count=1 2>/dev/null | base64 | tr -d "=+/" | dd bs=32 count=1 2>/dev/null)
-  KUBEAPISERVER_KEY_BASE64=$(dd if=/dev/urandom bs=128 count=1 2>/dev/null | base64 | tr -d "=+/" | dd bs=32 count=1 2>/dev/null)
+func detect-master {
+	FQDN=$(az aks show -g ${KUBEMARK_RESOURCE_GROUP} -n ${KUBEMARK_RESOURCE_NAME} -query 'fqdn' -o tsv)
 }
