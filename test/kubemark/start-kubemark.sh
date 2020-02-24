@@ -16,6 +16,7 @@
 
 # Script that creates a Kubemark cluster for any given cloud provider.
 
+set -x
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -107,6 +108,7 @@ function create-kube-hollow-node-resources {
   # Create addon pods.
   # Heapster.
   mkdir -p "${RESOURCE_DIRECTORY}/addons"
+  echo "$MASTER_IP"
   sed "s@{{MASTER_IP}}@${MASTER_IP}@g" "${RESOURCE_DIRECTORY}/heapster_template.json" > "${RESOURCE_DIRECTORY}/addons/heapster.json"
   metrics_mem_per_node=4
   metrics_mem=$((200 + metrics_mem_per_node*NUM_NODES))
