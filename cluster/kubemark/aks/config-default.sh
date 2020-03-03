@@ -15,8 +15,6 @@
 # limitations under the License.
 
 # NUM_NODES is used by start-kubemark.sh to determine a correct number of replicas.
-NUM_NODES=${KUBEMARK_NUM_NODES:-10}
-
 
 TEST_CLUSTER_LOG_LEVEL="${TEST_CLUSTER_LOG_LEVEL:---v=4}"
 HOLLOW_KUBELET_TEST_LOG_LEVEL="${HOLLOW_KUBELET_TEST_LOG_LEVEL:-$TEST_CLUSTER_LOG_LEVEL}"

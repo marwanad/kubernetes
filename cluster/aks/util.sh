@@ -24,6 +24,6 @@ function detect-project {
 	echo "AKS Provider: detect-project not implemented" 1>&2
 }
 
-func detect-master {
-	FQDN=$(az aks show -g ${KUBEMARK_RESOURCE_GROUP} -n ${KUBEMARK_RESOURCE_NAME} -query 'fqdn' -o tsv)
+function detect-master {
+	FQDN=$(az aks show -g "${KUBEMARK_RESOURCE_GROUP}" -n "${KUBEMARK_RESOURCE_NAME}" -query 'fqdn' -o tsv)
 }

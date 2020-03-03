@@ -25,7 +25,7 @@ source "${KUBE_ROOT}/test/kubemark/common/util.sh"
 # This function should authenticate docker to be able to read/write to
 # the right container registry (needed for pushing kubemark image).
 function authenticate-docker {
-	echo "Configuring registry authentication" 1>&2
+    echo "Configuring registry authentication" 1>&2
 }
 
 # This function should create kubemark master and write kubeconfig to
@@ -38,29 +38,28 @@ function create-kubemark-master {
     echo "Creating cluster..."
     if [ "$USE_EXISTING" = "false" ]; then
       GROUP_EXISTS=$(az group list -o tsv --query "[?name=='${KUBEMARK_RESOURCE_GROUP}'].name")
-      echo $GROUP_EXISTS
       if [ -z "$GROUP_EXISTS" ]; then 
-        az group create -g ${KUBEMARK_RESOURCE_GROUP} --location ${KUBEMARK_LOCATION}
+        az group create -g "${KUBEMARK_RESOURCE_GROUP}" --location "${KUBEMARK_LOCATION}"
       fi
       az aks create \
-          -g ${KUBEMARK_RESOURCE_GROUP} \
-          -n ${KUBEMARK_RESOURCE_NAME} \
+          -g "${KUBEMARK_RESOURCE_GROUP}" \
+          -n "${KUBEMARK_RESOURCE_NAME}" \
           --load-balancer-sku Standard \
-          --kubernetes-version ${KUBEMARK_KUBE_VERSION} \
-          --location ${KUBEMARK_LOCATION} \
-          --node-osdisk-size ${KUBEMARK_OS_DISK} \
-          --node-vm-size ${KUBEMARK_NODE_SKU} \
-          --node-count ${KUBEMARK_REAL_NODES}
+          --kubernetes-version "${KUBEMARK_KUBE_VERSION}" \
+          --location "${KUBEMARK_LOCATION}" \
+          --node-osdisk-size "${KUBEMARK_OS_DISK}" \
+          --node-vm-size "${KUBEMARK_NODE_SKU}" \
+          --node-count "${KUBEMARK_REAL_NODES}"
     fi;
     az aks get-credentials \
-        -g ${KUBEMARK_RESOURCE_GROUP} \
-        -n ${KUBEMARK_RESOURCE_NAME} \
+        -g "${KUBEMARK_RESOURCE_GROUP}" \
+        -n "${KUBEMARK_RESOURCE_NAME}" \
         -f "${RESOURCE_DIRECTORY}/kubeconfig.kubemark"
     FQDN=$(az aks show \
-      -g ${KUBEMARK_RESOURCE_GROUP} \
-      -n ${KUBEMARK_RESOURCE_NAME} \
+      -g "${KUBEMARK_RESOURCE_GROUP}" \
+      -n "${KUBEMARK_RESOURCE_NAME}" \
       --query 'fqdn' -o tsv)
-    export MASTER_IP=$(getent hosts ${FDQN} | awk '{ print $1 }')
+    export MASTER_IP=$(getent hosts "${FDQN}" | awk '{ print $1 }')
     export MASTER_INTERNAL_IP="$MASTER_IP"
     export KUBECONFIG="${RESOURCE_DIRECTORY}/kubeconfig.kubemark"
 }
@@ -70,8 +69,8 @@ function delete-kubemark-master {
     echo "Deleting cluster..."
     if [ "$USE_EXISTING" = "false" ]; then
       CLUSTER_EXISTS="$(az resource list -o tsv --query "[?name=='${KUBEMARK_RESOURCE_NAME}' && resourceGroup=='${KUBEMARK_RESOURCE_GROUP}'].id")"
-      if [ ! -z "$CLUSTER_EXISTS" ]; then
-        az aks delete -g ${KUBEMARK_RESOURCE_GROUP} -n ${KUBEMARK_RESOURCE_NAME} -y
+      if [ -n "$CLUSTER_EXISTS" ]; then
+        az aks delete -g "${KUBEMARK_RESOURCE_GROUP}" -n "${KUBEMARK_RESOURCE_NAME}" -y
       fi
     fi
 }
