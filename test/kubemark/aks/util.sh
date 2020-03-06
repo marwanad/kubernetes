@@ -59,8 +59,7 @@ function create-kubemark-master {
       -g "${KUBEMARK_RESOURCE_GROUP}" \
       -n "${KUBEMARK_RESOURCE_NAME}" \
       --query 'fqdn' -o tsv)
-    MASTER_IP=$(getent hosts "${FQDN}" | awk '{ print $1 }')
-    export MASTER_IP
+    export MASTER_IP="$FQDN"
     export MASTER_INTERNAL_IP="$MASTER_IP"
     export KUBECONFIG="${RESOURCE_DIRECTORY}/kubeconfig.kubemark"
 }
