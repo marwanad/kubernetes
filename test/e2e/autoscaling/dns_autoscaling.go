@@ -139,7 +139,7 @@ var _ = SIGDescribe("DNS horizontal autoscaling", func() {
 		}
 		setMigSizes(increasedSizes)
 		err = WaitForClusterSizeFunc(c,
-			func(size int) bool { return size == numNodes+len(originalSizes) }, scaleUpTimeout)
+			func(size int) bool { return size == numNodes+len(originalSizes) }, scaleUpTimeout, false)
 		framework.ExpectNoError(err)
 
 		ginkgo.By("Wait for kube-dns scaled to expected number")

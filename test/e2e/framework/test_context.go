@@ -329,7 +329,7 @@ func RegisterClusterFlags(flags *flag.FlagSet) {
 	flags.StringVar(&cloudConfig.ProjectID, "gce-project", "", "The GCE project being used, if applicable")
 	flags.StringVar(&cloudConfig.Zone, "gce-zone", "", "GCE zone being used, if applicable")
 	flags.StringVar(&cloudConfig.Region, "gce-region", "", "GCE region being used, if applicable")
-	flags.BoolVar(&cloudConfig.MultiZone, "gce-multizone", false, "If true, start GCE cloud provider with multizone support.")
+	flags.BoolVar(&cloudConfig.MultiZone, "gce-multizone", false, "If true, start GCE cloud providenr with multizone support.")
 	flags.BoolVar(&cloudConfig.MultiMaster, "gce-multimaster", false, "If true, the underlying GCE/GKE cluster is assumed to be multi-master.")
 	flags.StringVar(&cloudConfig.Cluster, "gke-cluster", "", "GKE name of cluster being used, if applicable")
 	flags.StringVar(&cloudConfig.NodeInstanceGroup, "node-instance-group", "", "Name of the managed instance group for nodes. Valid only for gce, gke or aws. If there is more than one group: comma separated list of groups.")

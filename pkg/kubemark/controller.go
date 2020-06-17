@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"strings"
 	"sync"
 	"time"
 
@@ -154,6 +155,7 @@ func (kubemarkController *KubemarkController) GetNodeGroupSize(nodeGroup string)
 	if err != nil {
 		return 0, err
 	}
+	klog.Infof("[kubemark/controller.go] returning node group size for nodeGroup: %s as :%d", nodeGroup, len(nodes))
 	return len(nodes), nil
 }
 
@@ -188,6 +190,10 @@ func (kubemarkController *KubemarkController) SetNodeGroupSize(nodeGroup string,
 		for i, node := range nodes {
 			if i == absDelta {
 				return nil
+			}
+			// skip deleting the starting hollow-node
+			if strings.HasPrefix(node, "hollow-node") {
+				continue
 			}
 			if err := kubemarkController.RemoveNodeFromNodeGroup(nodeGroup, node); err != nil {
 				return err
@@ -356,7 +362,10 @@ func (kubemarkCluster *kubemarkCluster) getHollowNodeName() (string, error) {
 		return "", err
 	}
 	for _, node := range nodes {
-		return node.Name, nil
+		// only look at hollow-nodes
+		if strings.HasPrefix(node.Spec.ProviderID, "kubemark://") {
+			return node.Name, nil
+		}
 	}
 	return "", fmt.Errorf("did not find any hollow nodes in the cluster")
 }

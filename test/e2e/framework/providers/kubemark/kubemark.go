@@ -59,7 +59,9 @@ func (p *Provider) GetGroupNodes(group string) ([]string, error) {
 
 // FrameworkBeforeEach prepares clients, configurations etc. for e2e testing
 func (p *Provider) FrameworkBeforeEach(f *framework.Framework) {
+	fmt.Println("Inside framework before each")
 	if *kubemarkExternalKubeConfig != "" && p.controller == nil {
+		fmt.Println("Creating controller")
 		externalConfig, err := clientcmd.BuildConfigFromFlags("", *kubemarkExternalKubeConfig)
 		externalConfig.QPS = f.Options.ClientQPS
 		externalConfig.Burst = f.Options.ClientBurst

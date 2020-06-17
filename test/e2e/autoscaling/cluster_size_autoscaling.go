@@ -193,7 +193,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		framework.ExpectEqual(eventFound, true)
 		// Verify that cluster size is not changed
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size <= nodeCount }, time.Second))
+			func(size int) bool { return size <= nodeCount }, time.Second, false))
 	})
 
 	simpleScaleUpTest := func(unready int) {
@@ -202,7 +202,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 
 		// Verify that cluster size is increased
 		framework.ExpectNoError(WaitForClusterSizeFuncWithUnready(f.ClientSet,
-			func(size int) bool { return size >= nodeCount+1 }, scaleUpTimeout, unready))
+			func(size int) bool { return size >= nodeCount+1 }, scaleUpTimeout, unready, false))
 		framework.ExpectNoError(waitForAllCaPodsReadyInNamespace(f, c))
 	}
 
@@ -234,7 +234,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		defer e2erc.DeleteRCAndWaitForGC(f.ClientSet, f.Namespace.Name, "gpu-pod-rc")
 
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size == nodeCount+1 }, scaleUpTimeout))
+			func(size int) bool { return size == nodeCount+1 }, scaleUpTimeout, false))
 		framework.ExpectEqual(len(getPoolNodes(f, gpuPoolName)), 1)
 	})
 
@@ -264,7 +264,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		e2erc.ScaleRC(f.ClientSet, f.ScalesGetter, f.Namespace.Name, "gpu-pod-rc", 2, true)
 
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size == nodeCount+2 }, scaleUpTimeout))
+			func(size int) bool { return size == nodeCount+2 }, scaleUpTimeout, false))
 		framework.ExpectEqual(len(getPoolNodes(f, gpuPoolName)), 2)
 	})
 
@@ -291,7 +291,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		defer e2erc.DeleteRCAndWaitForGC(f.ClientSet, f.Namespace.Name, "memory-reservation")
 		// Verify that cluster size is increased
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size >= nodeCount+1 }, scaleUpTimeout))
+			func(size int) bool { return size >= nodeCount+1 }, scaleUpTimeout, false))
 
 		// Expect gpu pool to stay intact
 		framework.ExpectEqual(len(getPoolNodes(f, gpuPoolName)), 0)
@@ -323,7 +323,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		e2erc.DeleteRCAndWaitForGC(f.ClientSet, f.Namespace.Name, "gpu-pod-rc")
 
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size == nodeCount }, scaleDownTimeout))
+			func(size int) bool { return size == nodeCount }, scaleDownTimeout, false))
 		framework.ExpectEqual(len(getPoolNodes(f, gpuPoolName)), 0)
 	})
 
@@ -402,7 +402,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 
 		// Verify, that cluster size is increased
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size >= nodeCount+extraNodes+1 }, scaleUpTimeout))
+			func(size int) bool { return size >= nodeCount+extraNodes+1 }, scaleUpTimeout, false))
 		framework.ExpectNoError(waitForAllCaPodsReadyInNamespace(f, c))
 	})
 
@@ -424,7 +424,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		defer e2erc.DeleteRCAndWaitForGC(f.ClientSet, f.Namespace.Name, "host-port")
 
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size >= nodeCount+2 }, scaleUpTimeout))
+			func(size int) bool { return size >= nodeCount+2 }, scaleUpTimeout, false))
 		framework.ExpectNoError(waitForAllCaPodsReadyInNamespace(f, c))
 	})
 
@@ -586,7 +586,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		framework.WaitForGroupSize(minMig, int32(minSize+1))
 		// Verify that cluster size is increased
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size >= nodeCount+1 }, scaleUpTimeout))
+			func(size int) bool { return size >= nodeCount+1 }, scaleUpTimeout, false))
 
 		newNodes, err := framework.GetGroupNodes(minMig)
 		framework.ExpectNoError(err)
@@ -679,11 +679,11 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		}
 		setMigSizes(newSizes)
 		framework.ExpectNoError(WaitForClusterSizeFuncWithUnready(f.ClientSet,
-			func(size int) bool { return size >= increasedSize }, manualResizeTimeout, unready))
+			func(size int) bool { return size >= increasedSize }, manualResizeTimeout, unready, false))
 
 		ginkgo.By("Some node should be removed")
 		framework.ExpectNoError(WaitForClusterSizeFuncWithUnready(f.ClientSet,
-			func(size int) bool { return size < increasedSize }, scaleDownTimeout, unready))
+			func(size int) bool { return size < increasedSize }, scaleDownTimeout, unready, false))
 	}
 
 	ginkgo.It("should correctly scale down after a node is not needed [Feature:ClusterSizeAutoscalingScaleDown]",
@@ -706,7 +706,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		extraNodes := getPoolInitialSize(extraPoolName)
 
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size >= increasedSize+extraNodes }, scaleUpTimeout))
+			func(size int) bool { return size >= increasedSize+extraNodes }, scaleUpTimeout, false))
 
 		ginkgo.By("Some node should be removed")
 		// Apparently GKE master is restarted couple minutes after the node pool is added
@@ -714,14 +714,14 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		// this issue.
 		// TODO: Remove the extra time when GKE restart is fixed.
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size < increasedSize+extraNodes }, scaleDownTimeout+10*time.Minute))
+			func(size int) bool { return size < increasedSize+extraNodes }, scaleDownTimeout+10*time.Minute, false))
 	})
 
 	ginkgo.It("should be able to scale down when rescheduling a pod is required and pdb allows for it[Feature:ClusterSizeAutoscalingScaleDown]", func() {
 		runDrainTest(f, originalSizes, f.Namespace.Name, 1, 1, func(increasedSize int) {
 			ginkgo.By("Some node should be removed")
 			framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-				func(size int) bool { return size < increasedSize }, scaleDownTimeout))
+				func(size int) bool { return size < increasedSize }, scaleDownTimeout, false))
 		})
 	})
 
@@ -739,7 +739,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		runDrainTest(f, originalSizes, f.Namespace.Name, 2, 1, func(increasedSize int) {
 			ginkgo.By("Some node should be removed")
 			framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-				func(size int) bool { return size < increasedSize }, scaleDownTimeout))
+				func(size int) bool { return size < increasedSize }, scaleDownTimeout, false))
 		})
 	})
 
@@ -747,7 +747,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		runDrainTest(f, originalSizes, "kube-system", 2, 1, func(increasedSize int) {
 			ginkgo.By("Some node should be removed")
 			framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-				func(size int) bool { return size < increasedSize }, scaleDownTimeout))
+				func(size int) bool { return size < increasedSize }, scaleDownTimeout, false))
 		})
 	})
 
@@ -800,7 +800,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 
 		// Verify that cluster size is increased
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size >= len(nodes.Items)+1 }, scaleUpTimeout))
+			func(size int) bool { return size >= len(nodes.Items)+1 }, scaleUpTimeout, false))
 		framework.ExpectNoError(waitForAllCaPodsReadyInNamespace(f, c))
 	})
 
@@ -835,7 +835,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 			drainNode(f, node)
 		}
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size <= nodeCount }, scaleDownTimeout))
+			func(size int) bool { return size <= nodeCount }, scaleDownTimeout, false))
 
 		// GKE-specific check
 		newSize := getPoolSize(f, extraPoolName)
@@ -865,7 +865,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		// this part is identical
 		drainNode(f, node)
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size < nodeCount-minSize+1 }, scaleDownTimeout))
+			func(size int) bool { return size < nodeCount-minSize+1 }, scaleDownTimeout, false))
 
 		// non-GKE only
 		newSize, err := framework.GroupSize(minMig)
@@ -950,7 +950,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		time.Sleep(scaleUpTimeout)
 		// Verify that cluster size is not changed
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size == nodeCount }, time.Second))
+			func(size int) bool { return size == nodeCount }, time.Second, false))
 	})
 
 	ginkgo.It("should scale up when non expendable pod is created [Feature:ClusterSizeAutoscalingScaleUp]", func() {
@@ -960,7 +960,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		defer cleanupFunc()
 		// Verify that cluster size is not changed
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size > nodeCount }, time.Second))
+			func(size int) bool { return size > nodeCount }, time.Second, false))
 	})
 
 	ginkgo.It("shouldn't scale up when expendable pod is preempted [Feature:ClusterSizeAutoscalingScaleUp]", func() {
@@ -972,7 +972,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		cleanupFunc2 := ReserveMemoryWithPriority(f, "memory-reservation2", nodeCount, int(float64(nodeCount)*float64(0.7)*float64(memAllocatableMb)), true, defaultTimeout, highPriorityClassName)
 		defer cleanupFunc2()
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size == nodeCount }, time.Second))
+			func(size int) bool { return size == nodeCount }, time.Second, false))
 	})
 
 	ginkgo.It("should scale down when expendable pod is running [Feature:ClusterSizeAutoscalingScaleDown]", func() {
@@ -983,7 +983,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		defer cleanupFunc()
 		ginkgo.By("Waiting for scale down")
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size == nodeCount }, scaleDownTimeout))
+			func(size int) bool { return size == nodeCount }, scaleDownTimeout, false))
 	})
 
 	ginkgo.It("shouldn't scale down when non expendable pod is running [Feature:ClusterSizeAutoscalingScaleDown]", func() {
@@ -995,7 +995,7 @@ var _ = SIGDescribe("Cluster size autoscaling [Slow]", func() {
 		ginkgo.By(fmt.Sprintf("Waiting for scale down hoping it won't happen, sleep for %s", scaleDownTimeout.String()))
 		time.Sleep(scaleDownTimeout)
 		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-			func(size int) bool { return size == increasedSize }, time.Second))
+			func(size int) bool { return size == increasedSize }, time.Second, false))
 	})
 })
 
@@ -1335,16 +1335,21 @@ func ReserveMemoryWithSelectorAndTolerations(f *framework.Framework, id string, 
 // ReserveMemory creates a replication controller with pods that, in summation,
 // request the specified amount of memory.
 func ReserveMemory(f *framework.Framework, id string, replicas, megabytes int, expectRunning bool, timeout time.Duration) func() error {
-	return reserveMemory(f, id, replicas, megabytes, expectRunning, timeout, nil, nil, "")
+	toleration := v1.Toleration{
+		Key:      "node.kubernetes.io/network-unavailable",
+		Operator: v1.TolerationOpExists,
+		Effect:   v1.TaintEffectNoSchedule,
+	}
+	return reserveMemory(f, id, replicas, megabytes, expectRunning, timeout, nil, []v1.Toleration{toleration}, "")
 }
 
 // WaitForClusterSizeFunc waits until the cluster size matches the given function.
-func WaitForClusterSizeFunc(c clientset.Interface, sizeFunc func(int) bool, timeout time.Duration) error {
-	return WaitForClusterSizeFuncWithUnready(c, sizeFunc, timeout, 0)
+func WaitForClusterSizeFunc(c clientset.Interface, sizeFunc func(int) bool, timeout time.Duration, isKubemark bool) error {
+	return WaitForClusterSizeFuncWithUnready(c, sizeFunc, timeout, 0, isKubemark)
 }
 
 // WaitForClusterSizeFuncWithUnready waits until the cluster size matches the given function and assumes some unready nodes.
-func WaitForClusterSizeFuncWithUnready(c clientset.Interface, sizeFunc func(int) bool, timeout time.Duration, expectedUnready int) error {
+func WaitForClusterSizeFuncWithUnready(c clientset.Interface, sizeFunc func(int) bool, timeout time.Duration, expectedUnready int, isKubemark bool) error {
 	for start := time.Now(); time.Since(start) < timeout; time.Sleep(20 * time.Second) {
 		nodes, err := c.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{FieldSelector: fields.Set{
 			"spec.unschedulable": "false",
@@ -1353,6 +1358,18 @@ func WaitForClusterSizeFuncWithUnready(c clientset.Interface, sizeFunc func(int)
 			klog.Warningf("Failed to list nodes: %v", err)
 			continue
 		}
+		nodesList := &v1.NodeList{}
+
+		// if kubemark test, only list hollow nodes
+		if isKubemark {
+			for _, n := range nodes.Items {
+				if strings.HasPrefix(n.Spec.ProviderID, "kubemark://") {
+					nodesList.Items = append(nodesList.Items, n)
+				}
+			}
+			nodes = nodesList
+		}
+
 		numNodes := len(nodes.Items)
 
 		// Filter out not-ready nodes.
@@ -1744,7 +1761,7 @@ func manuallyIncreaseClusterSize(f *framework.Framework, originalSizes map[strin
 		return false
 	}
 
-	framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet, checkClusterSize, manualResizeTimeout))
+	framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet, checkClusterSize, manualResizeTimeout, false))
 	return increasedSize
 }
 

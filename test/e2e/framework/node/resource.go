@@ -350,7 +350,7 @@ func GetMasterAndWorkerNodes(c clientset.Interface) (sets.String, *v1.NodeList, 
 // isNodeUntainted tests whether a fake pod can be scheduled on "node", given its current taints.
 // TODO: need to discuss wether to return bool and error type
 func isNodeUntainted(node *v1.Node) bool {
-	return isNodeUntaintedWithNonblocking(node, "")
+	return isNodeUntaintedWithNonblocking(node, "node.kubernetes.io/network-unavailable")
 }
 
 // isNodeUntaintedWithNonblocking tests whether a fake pod can be scheduled on "node"
@@ -424,9 +424,9 @@ func IsNodeSchedulable(node *v1.Node) bool {
 // 2) doesn't have NetworkUnavailable condition set to true
 func IsNodeReady(node *v1.Node) bool {
 	nodeReady := IsConditionSetAsExpected(node, v1.NodeReady, true)
-	networkReady := isConditionUnset(node, v1.NodeNetworkUnavailable) ||
-		IsConditionSetAsExpectedSilent(node, v1.NodeNetworkUnavailable, false)
-	return nodeReady && networkReady
+	// networkReady := isConditionUnset(node, v1.NodeNetworkUnavailable) ||
+	// 	IsConditionSetAsExpectedSilent(node, v1.NodeNetworkUnavailable, false)
+	return nodeReady
 }
 
 // hasNonblockingTaint returns true if the node contains at least

@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -159,13 +160,15 @@ func CheckReady(c clientset.Interface, size int, timeout time.Duration) ([]v1.No
 			e2elog.Logf("Failed to list nodes: %v", err)
 			continue
 		}
+
 		numNodes := len(nodes.Items)
+		e2elog.Logf("Will be waiting for %d nodes", numNodes)
 
 		// Filter out not-ready nodes.
 		Filter(nodes, func(node v1.Node) bool {
 			nodeReady := IsConditionSetAsExpected(&node, v1.NodeReady, true)
-			networkReady := isConditionUnset(&node, v1.NodeNetworkUnavailable) || IsConditionSetAsExpected(&node, v1.NodeNetworkUnavailable, false)
-			return nodeReady && networkReady
+			// networkReady := isConditionUnset(&node, v1.NodeNetworkUnavailable) || IsConditionSetAsExpected(&node, v1.NodeNetworkUnavailable, false)
+			return nodeReady
 		})
 		numReady := len(nodes.Items)
 
@@ -173,7 +176,7 @@ func CheckReady(c clientset.Interface, size int, timeout time.Duration) ([]v1.No
 			e2elog.Logf("Cluster has reached the desired number of ready nodes %d", size)
 			return nodes.Items, nil
 		}
-		e2elog.Logf("Waiting for ready nodes %d, current ready %d, not ready nodes %d", size, numReady, numNodes-numReady)
+		e2elog.Logf("Waiting for ready nodes to reach %d, current ready %d, not ready nodes %d", size, numReady, numNodes-numReady)
 	}
 	return nil, fmt.Errorf("timeout waiting %v for number of ready nodes to be %d", timeout, size)
 }
@@ -182,10 +185,19 @@ func CheckReady(c clientset.Interface, size int, timeout time.Duration) ([]v1.No
 func waitListSchedulableNodes(c clientset.Interface) (*v1.NodeList, error) {
 	var nodes *v1.NodeList
 	var err error
+	var nodesToReturn *v1.NodeList
+
 	if wait.PollImmediate(poll, singleCallTimeout, func() (bool, error) {
 		nodes, err = c.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{FieldSelector: fields.Set{
 			"spec.unschedulable": "false",
 		}.AsSelector().String()})
+
+		nodesToReturn = &v1.NodeList{}
+		for _, node := range nodes.Items {
+			if strings.HasPrefix(node.Spec.ProviderID, "kubemark://") {
+				nodesToReturn.Items = append(nodesToReturn.Items, node)
+			}
+		}
 		if err != nil {
 			if testutils.IsRetryableAPIError(err) {
 				return false, nil
@@ -194,9 +206,9 @@ func waitListSchedulableNodes(c clientset.Interface) (*v1.NodeList, error) {
 		}
 		return true, nil
 	}) != nil {
-		return nodes, err
+		return nodesToReturn, err
 	}
-	return nodes, nil
+	return nodesToReturn, nil
 }
 
 // checkWaitListSchedulableNodes is a wrapper around listing nodes supporting retries.
@@ -267,16 +279,19 @@ func CheckReadyForTests(c clientset.Interface, nonblockingTaints string, allowed
 // Nodes with taints nonblocking taints are permitted to have that taint and
 // also have their node.Spec.Unschedulable field ignored for the purposes of this function.
 func readyForTests(node *v1.Node, nonblockingTaints string) bool {
-	if hasNonblockingTaint(node, nonblockingTaints) {
-		// If the node has one of the nonblockingTaints taints; just check that it is ready
-		// and don't require node.Spec.Unschedulable to be set either way.
-		if !IsNodeReady(node) || !isNodeUntaintedWithNonblocking(node, nonblockingTaints) {
-			return false
-		}
-	} else {
-		if !IsNodeSchedulable(node) || !isNodeUntainted(node) {
-			return false
-		}
-	}
-	return true
+	return IsNodeReady(node)
 }
+
+// if hasNonblockingTaint(node, nonblockingTaints) {
+// 	// If the node has one of the nonblockingTaints taints; just check that it is ready
+// 	// and don't require node.Spec.Unschedulable to be set either way.
+// 	if !IsNodeReady(node) || !isNodeUntaintedWithNonblocking(node, nonblockingTaints) {
+// 		return false
+// 	}
+// } else {
+// 	if !IsNodeSchedulable(node) || !isNodeUntainted(node) {
+// 		return false
+// 	}
+// }
+// return true
+// }

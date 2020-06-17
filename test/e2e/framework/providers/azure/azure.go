@@ -17,6 +17,7 @@ limitations under the License.
 package azure
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -97,4 +98,14 @@ func (p *Provider) EnableAndDisableInternalLB() (enable, disable func(svc *v1.Se
 		svc.ObjectMeta.Annotations = map[string]string{azure.ServiceAnnotationLoadBalancerInternal: "false"}
 	}
 	return
+}
+
+// GroupSize returns the size of an instance group
+func (p *Provider) GroupSize(group string) (int, error) {
+	vmss, err := p.azureCloud.VirtualMachineScaleSetsClient.Get(context.Background(), p.azureCloud.ResourceGroup, group)
+	if err != nil {
+		return -1, err.Error()
+	}
+	size := *vmss.Sku.Capacity
+	return int(size), nil
 }
