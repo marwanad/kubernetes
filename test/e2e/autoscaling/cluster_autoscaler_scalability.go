@@ -26,6 +26,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	clientset "k8s.io/client-go/kubernetes"
@@ -238,110 +239,110 @@ var _ = framework.KubeDescribe("Cluster size autoscaler scalability [Slow]", fun
 			}, scaleDownTimeout, true))
 	})
 
-	// ginkgo.It("should scale down underutilized nodes [Feature:ClusterAutoscalerScalability4]", func() {
-	// 	perPodReservation := int(float64(memCapacityMb) * 0.01)
-	// 	// underutilizedNodes are 10% full
-	// 	underutilizedPerNodeReplicas := 10
-	// 	// fullNodes are 70% full
-	// 	fullPerNodeReplicas := 70
-	// 	totalNodes := maxNodes
-	// 	underutilizedRatio := 0.3
-	// 	maxDelta := 30
+	ginkgo.It("should scale down underutilized nodes [Feature:ClusterAutoscalerScalability4]", func() {
+		perPodReservation := int(float64(memCapacityMb) * 0.01)
+		// underutilizedNodes are 10% full
+		underutilizedPerNodeReplicas := 10
+		// fullNodes are 70% full
+		fullPerNodeReplicas := 70
+		totalNodes := maxNodes
+		underutilizedRatio := 0.3
+		maxDelta := 30
 
-	// 	// resize cluster to totalNodes
-	// 	newSizes := map[string]int{
-	// 		anyKey(originalSizes): totalNodes,
-	// 	}
-	// 	setMigSizes(newSizes)
+		// resize cluster to totalNodes
+		newSizes := map[string]int{
+			anyKey(originalSizes): totalNodes,
+		}
+		setMigSizes(newSizes)
 
-	// 	framework.ExpectNoError(e2enode.WaitForReadyNodes(f.ClientSet, totalNodes, largeResizeTimeout))
+		framework.ExpectNoError(e2enode.WaitForReadyNodes(f.ClientSet, totalNodes, largeResizeTimeout))
 
-	// 	// annotate all nodes with no-scale-down
-	// 	ScaleDownDisabledKey := "cluster-autoscaler.kubernetes.io/scale-down-disabled"
+		// annotate all nodes with no-scale-down
+		ScaleDownDisabledKey := "cluster-autoscaler.kubernetes.io/scale-down-disabled"
 
-	// 	nodes, err := f.ClientSet.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{
-	// 		FieldSelector: fields.Set{
-	// 			"spec.unschedulable": "false",
-	// 		}.AsSelector().String(),
-	// 	})
+		nodes, err := f.ClientSet.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{
+			FieldSelector: fields.Set{
+				"spec.unschedulable": "false",
+			}.AsSelector().String(),
+		})
 
-	// 	nodesList := &v1.NodeList{}
-	// 	// don't modify the hollow-node annotations
-	// 	for _, n := range nodes.Items {
-	// 		if !strings.HasPrefix(n.Name, "hollow-node") {
-	// 			nodesList.Items = append(nodesList.Items, n)
-	// 		}
-	// 	}
+		nodesList := &v1.NodeList{}
+		// don't modify the hollow-node annotations
+		for _, n := range nodes.Items {
+			if !strings.HasPrefix(n.Name, "hollow-node") {
+				nodesList.Items = append(nodesList.Items, n)
+			}
+		}
 
-	// 	framework.ExpectNoError(err)
-	// 	framework.ExpectNoError(addAnnotation(f, nodesList.Items, ScaleDownDisabledKey, "true"))
+		framework.ExpectNoError(err)
+		framework.ExpectNoError(addAnnotation(f, nodesList.Items, ScaleDownDisabledKey, "true"))
 
-	// 	// distribute pods using replication controllers taking up space that should
-	// 	// be empty after pods are distributed
-	// 	underutilizedNodesNum := int(float64(maxNodes) * underutilizedRatio)
-	// 	fullNodesNum := totalNodes - underutilizedNodesNum
+		// distribute pods using replication controllers taking up space that should
+		// be empty after pods are distributed
+		underutilizedNodesNum := int(float64(maxNodes) * underutilizedRatio)
+		fullNodesNum := totalNodes - underutilizedNodesNum
 
-	// 	podDistribution := []podBatch{
-	// 		{numNodes: fullNodesNum, podsPerNode: fullPerNodeReplicas},
-	// 		{numNodes: underutilizedNodesNum, podsPerNode: underutilizedPerNodeReplicas}}
+		podDistribution := []podBatch{
+			{numNodes: fullNodesNum, podsPerNode: fullPerNodeReplicas},
+			{numNodes: underutilizedNodesNum, podsPerNode: underutilizedPerNodeReplicas}}
 
-	// 	cleanup := distributeLoad(f, f.Namespace.Name, "10-70", podDistribution, perPodReservation,
-	// 		int(0.95*float64(memCapacityMb)), map[string]string{}, largeScaleUpTimeout)
-	// 	defer cleanup()
+		cleanup := distributeLoad(f, f.Namespace.Name, "10-70", podDistribution, perPodReservation,
+			int(0.95*float64(memCapacityMb)), map[string]string{}, largeScaleUpTimeout)
+		defer cleanup()
 
-	// 	// enable scale down again
-	// 	framework.ExpectNoError(addAnnotation(f, nodesList.Items, ScaleDownDisabledKey, "false"))
+		// enable scale down again
+		framework.ExpectNoError(addAnnotation(f, nodesList.Items, ScaleDownDisabledKey, "false"))
 
-	// 	// wait for scale down to start. Node deletion takes a long time, so we just
-	// 	// wait for maximum of 30 nodes deleted
-	// 	nodesToScaleDownCount := int(float64(totalNodes) * 0.1)
-	// 	if nodesToScaleDownCount > maxDelta {
-	// 		nodesToScaleDownCount = maxDelta
-	// 	}
-	// 	expectedSize := totalNodes - nodesToScaleDownCount
-	// 	timeout := time.Duration(nodesToScaleDownCount)*time.Minute + scaleDownTimeout
-	// 	framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet, func(size int) bool {
-	// 		return size <= expectedSize
-	// 	}, timeout, true))
-	// })
+		// wait for scale down to start. Node deletion takes a long time, so we just
+		// wait for maximum of 30 nodes deleted
+		nodesToScaleDownCount := int(float64(totalNodes) * 0.1)
+		if nodesToScaleDownCount > maxDelta {
+			nodesToScaleDownCount = maxDelta
+		}
+		expectedSize := totalNodes - nodesToScaleDownCount
+		timeout := time.Duration(nodesToScaleDownCount)*time.Minute + scaleDownTimeout
+		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet, func(size int) bool {
+			return size <= expectedSize
+		}, timeout, true))
+	})
 
-	// ginkgo.It("shouldn't scale down with underutilized nodes due to host port conflicts [Feature:ClusterAutoscalerScalability5]", func() {
-	// 	fullReservation := int(float64(memCapacityMb) * 0.9)
-	// 	hostPortPodReservation := int(float64(memCapacityMb) * 0.3)
-	// 	totalNodes := maxNodes
-	// 	reservedPort := 4321
+	ginkgo.It("shouldn't scale down with underutilized nodes due to host port conflicts [Feature:ClusterAutoscalerScalability5]", func() {
+		fullReservation := int(float64(memCapacityMb) * 0.9)
+		hostPortPodReservation := int(float64(memCapacityMb) * 0.3)
+		totalNodes := maxNodes
+		reservedPort := 4321
 
-	// 	// resize cluster to totalNodes
-	// 	newSizes := map[string]int{
-	// 		anyKey(originalSizes): totalNodes,
-	// 	}
-	// 	setMigSizes(newSizes)
-	// 	framework.ExpectNoError(e2enode.WaitForReadyNodes(f.ClientSet, totalNodes, largeResizeTimeout))
-	// 	divider := int(float64(totalNodes) * 0.7)
-	// 	fullNodesCount := divider
-	// 	underutilizedNodesCount := totalNodes - fullNodesCount
+		// resize cluster to totalNodes
+		newSizes := map[string]int{
+			anyKey(originalSizes): totalNodes,
+		}
+		setMigSizes(newSizes)
+		framework.ExpectNoError(e2enode.WaitForReadyNodes(f.ClientSet, totalNodes, largeResizeTimeout))
+		divider := int(float64(totalNodes) * 0.7)
+		fullNodesCount := divider
+		underutilizedNodesCount := totalNodes - fullNodesCount
 
-	// 	ginkgo.By("Reserving full nodes")
-	// 	// run RC1 w/o host port
-	// 	cleanup := ReserveMemoryForKubemark(f, "filling-pod", fullNodesCount, fullNodesCount*fullReservation, true, largeScaleUpTimeout*2)
-	// 	defer cleanup()
+		ginkgo.By("Reserving full nodes")
+		// run RC1 w/o host port
+		cleanup := ReserveMemoryForKubemark(f, "filling-pod", fullNodesCount, fullNodesCount*fullReservation, true, largeScaleUpTimeout*2)
+		defer cleanup()
 
-	// 	ginkgo.By("Reserving host ports on remaining nodes")
-	// 	// run RC2 w/ host port
-	// 	cleanup2 := createHostPortPodsWithMemory(f, "underutilizing-host-port-pod", underutilizedNodesCount, reservedPort, underutilizedNodesCount*hostPortPodReservation, largeScaleUpTimeout)
-	// 	defer cleanup2()
+		ginkgo.By("Reserving host ports on remaining nodes")
+		// run RC2 w/ host port
+		cleanup2 := createHostPortPodsWithMemory(f, "underutilizing-host-port-pod", underutilizedNodesCount, reservedPort, underutilizedNodesCount*hostPortPodReservation, largeScaleUpTimeout)
+		defer cleanup2()
 
-	// 	waitForAllCaPodsReadyInNamespace(f, c)
-	// 	// wait and check scale down doesn't occur
-	// 	ginkgo.By(fmt.Sprintf("Sleeping %v minutes...", scaleDownTimeout.Minutes()))
-	// 	time.Sleep(scaleDownTimeout)
+		waitForAllCaPodsReadyInNamespace(f, c)
+		// wait and check scale down doesn't occur
+		ginkgo.By(fmt.Sprintf("Sleeping %v minutes...", scaleDownTimeout.Minutes()))
+		time.Sleep(scaleDownTimeout)
 
-	// 	ginkgo.By("Checking if the number of nodes is as expected")
-	// 	nodes, err := e2enode.GetReadySchedulableNodes(f.ClientSet)
-	// 	framework.ExpectNoError(err)
-	// 	klog.Infof("Nodes: %v, expected: %v", len(nodes.Items), totalNodes)
-	// 	framework.ExpectEqual(len(nodes.Items), totalNodes)
-	// })
+		ginkgo.By("Checking if the number of nodes is as expected")
+		nodes, err := e2enode.GetReadySchedulableNodes(f.ClientSet)
+		framework.ExpectNoError(err)
+		klog.Infof("Nodes: %v, expected: %v", len(nodes.Items), totalNodes)
+		framework.ExpectEqual(len(nodes.Items), totalNodes)
+	})
 
 	ginkgo.Specify("CA ignores unschedulable pods while scheduling schedulable pods [Feature:ClusterAutoscalerScalability6]", func() {
 		// Start a number of pods saturating existing nodes.
