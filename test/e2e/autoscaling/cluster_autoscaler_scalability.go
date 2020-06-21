@@ -210,33 +210,33 @@ var _ = framework.KubeDescribe("Cluster size autoscaler scalability [Slow]", fun
 		klog.Infof("Scaled up twice")
 	})
 
-	// ginkgo.It("should scale down empty nodes [Feature:ClusterAutoscalerScalability3]", func() {
-	// 	perNodeReservation := int(float64(memCapacityMb) * 0.7)
-	// 	replicas := int(math.Ceil(maxNodes * 0.7))
-	// 	totalNodes := maxNodes
+	ginkgo.It("should scale down empty nodes [Feature:ClusterAutoscalerScalability3]", func() {
+		perNodeReservation := int(float64(memCapacityMb) * 0.7)
+		replicas := int(math.Ceil(maxNodes * 0.7))
+		totalNodes := maxNodes
 
-	// 	// resize cluster to totalNodes
-	// 	newSizes := map[string]int{
-	// 		anyKey(originalSizes): totalNodes,
-	// 	}
-	// 	setMigSizes(newSizes)
-	// 	framework.ExpectNoError(e2enode.WaitForReadyNodes(f.ClientSet, totalNodes, largeResizeTimeout))
+		// resize cluster to totalNodes
+		newSizes := map[string]int{
+			anyKey(originalSizes): totalNodes,
+		}
+		setMigSizes(newSizes)
+		framework.ExpectNoError(e2enode.WaitForReadyNodes(f.ClientSet, totalNodes, largeResizeTimeout))
 
-	// 	// run replicas
-	// 	rcConfig := reserveMemoryRCConfig(f, "some-pod", replicas, replicas*perNodeReservation, largeScaleUpTimeout)
-	// 	expectedResult := createClusterPredicates(totalNodes)
-	// 	config := createScaleUpTestConfig(totalNodes, totalNodes, rcConfig, expectedResult)
-	// 	tolerateUnreadyNodes := totalNodes / 10
-	// 	tolerateUnreadyPods := replicas / 10
-	// 	testCleanup := simpleScaleUpTestWithTolerance(f, config, tolerateUnreadyNodes, tolerateUnreadyPods)
-	// 	defer testCleanup()
+		// run replicas
+		rcConfig := reserveMemoryRCConfig(f, "some-pod", replicas, replicas*perNodeReservation, largeScaleUpTimeout)
+		expectedResult := createClusterPredicates(totalNodes)
+		config := createScaleUpTestConfig(totalNodes, totalNodes, rcConfig, expectedResult)
+		tolerateUnreadyNodes := totalNodes / 10
+		tolerateUnreadyPods := replicas / 10
+		testCleanup := simpleScaleUpTestWithTolerance(f, config, tolerateUnreadyNodes, tolerateUnreadyPods)
+		defer testCleanup()
 
-	// 	// check if empty nodes are scaled down
-	// 	framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
-	// 		func(size int) bool {
-	// 			return size <= replicas+3 // leaving space for non-evictable kube-system pods
-	// 		}, scaleDownTimeout, true))
-	// })
+		// check if empty nodes are scaled down
+		framework.ExpectNoError(WaitForClusterSizeFunc(f.ClientSet,
+			func(size int) bool {
+				return size <= replicas+3 // leaving space for non-evictable kube-system pods
+			}, scaleDownTimeout, true))
+	})
 
 	// ginkgo.It("should scale down underutilized nodes [Feature:ClusterAutoscalerScalability4]", func() {
 	// 	perPodReservation := int(float64(memCapacityMb) * 0.01)
