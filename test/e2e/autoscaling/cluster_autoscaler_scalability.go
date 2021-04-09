@@ -42,7 +42,7 @@ import (
 
 const (
 	memoryReservationTimeout = 5 * time.Minute
-	largeResizeTimeout       = 8 * time.Minute
+	largeResizeTimeout       = 20 * time.Minute
 	largeScaleUpTimeout      = 10 * time.Minute
 	maxNodes                 = 1000
 )
